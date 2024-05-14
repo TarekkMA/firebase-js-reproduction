@@ -1,14 +1,13 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
 
 import {
-  getFirestore,
-  collection,
-  getDoc,
-  doc,
-  onSnapshot,
-  setDoc,
-  persistentLocalCache,
-} from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+  getAuth,
+  linkWithPopup,
+  signInWithPopup,
+  OAuthProvider,
+  signInAnonymously,
+  signInWithCredential,
+} from "https://www.gstatic.com/firebasejs/10.11.1/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyB7wZb2tO1-Fs6GbDADUSTs2Qs3w08Hovw",
@@ -23,40 +22,30 @@ const firebaseConfig = {
 };
 
 
-const app = initializeApp(firebaseConfig, {localCache: persistentLocalCache(/*settings*/{})});
-const db = getFirestore(app);
-
-console.log(db);
+const app = initializeApp(firebaseConfig);
+const auth = getAuth();
 
 
-document.getElementById("value").innerText = "Loading...";
+await signInAnonymously(auth);
+console.log("Signed in anonymously");
 
-getDoc(doc(db, "test_10153", "counter")).then((docSnap) => {
-    document.getElementById("value").innerText = docSnap.exists()
-        ? docSnap.data().value
-        : "No such document!";
-});
 
-onSnapshot(doc(db, "test_10153", "counter"), (doc) => {
-  document.getElementById("value").innerText = doc.exists()
-    ? doc.data()["value"]
-    : "No such document!";
-});
+const provider = new OAuthProvider('apple.com');
+provider.addScope('email');
+provider.addScope('name');
 
-document.getElementById("increment").addEventListener("click", async () => {
-  const docSnap = await getDoc(doc(db, "test_10153", "counter"));
-  let value = (docSnap.exists() ? docSnap.data().value : 0) + 1;
-  console.log(value);
-  await setDoc(doc(db, "test_10153", "counter"), {
-    value: value,
-  });
-});
-
-document.getElementById("decrement").addEventListener("click", async () => {
-  const docSnap = await getDoc(doc(db, "test_10153", "counter"));
-  let value = (docSnap.exists() ? docSnap.data().value : 0) - 1;
-  console.log(value);
-  await setDoc(doc(db, "test_10153", "counter"), {
-    value: value,
-  });
+// get button with id link, and sign in with apple when clicked
+document.getElementById("link").addEventListener("click", async () => {
+  try {
+    await linkWithPopup(auth.currentUser, provider);
+    console.log("Linked with Apple successfully");
+  } catch (error) {
+    console.error(error);
+    //  check if the credential-already-in-use sign in with creds in error
+    if (error.code === "auth/credential-already-in-use") {
+      const credential = OAuthProvider.credentialFromError(error);
+      await signInWithCredential(auth, credential);
+      console.log("Signed in with Apple successfully");
+    }
+  }
 });
