@@ -8,6 +8,8 @@ import {
   onSnapshot,
   setDoc,
   persistentLocalCache,
+  terminate,
+  clearIndexedDbPersistence,
 } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -24,7 +26,7 @@ const firebaseConfig = {
 
 
 const app = initializeApp(firebaseConfig, {localCache: persistentLocalCache(/*settings*/{})});
-const db = getFirestore(app);
+let db = getFirestore(app);
 
 console.log(db);
 
@@ -59,4 +61,16 @@ document.getElementById("decrement").addEventListener("click", async () => {
   await setDoc(doc(db, "test_10153", "counter"), {
     value: value,
   });
+});
+
+
+document.getElementById("terminate").addEventListener("click", async () => {
+  // Terminates the Firestore instance.
+  await terminate(db);
+  await clearIndexedDbPersistence(db);
+});
+
+document.getElementById("reinitialize").addEventListener("click", async () => {
+  // Reinitializes the Firestore instance.
+  db = getFirestore(app);
 });
